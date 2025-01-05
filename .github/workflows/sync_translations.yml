@@ -1,0 +1,66 @@
+name: Sincronização de Traduções
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # Executa uma vez por dia à meia-noite (UTC)
+  push:
+    branches:
+      - main  # Executa quando há push para a branch principal
+
+jobs:
+  sync_translations:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js (para qualquer operação com arquivos JSON, caso necessário)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Instalar dependências
+        run: |
+          npm install
+
+      - name: Atualizar as traduções
+        run: |
+          # Passo 1: Clonar repositórios listados no arquivo 'repositorios.json'
+          repos=$(cat repositorios.json | jq -r '.repos[]')
+          
+          for repo in $repos; do
+            # Clonar cada repositório
+            echo "Clonando $repo..."
+            git clone "https://github.com/$repo.git" "mods/$repo"
+            
+            # Passo 2: Copiar traduções para a pasta de traduções do repositório
+            # (Você pode precisar ajustar os caminhos, dependendo de onde as traduções estão dentro dos repositórios)
+            cp -r "mods/$repo/traducoes/*" "traducoes/$repo/"
+
+            # Passo 3: Verificar se a tradução foi atualizada
+            # (Aqui você pode adicionar lógica para comparar arquivos, ou só fazer uma marcação de data)
+            echo "Atualizando status de tradução para $repo..."
+            echo "Mod: $repo | Última Atualização: $(date '+%Y-%m-%d') | Status: ✅ Atualizado" >> translations_status.txt
+          done
+
+      - name: Atualizar README.md com o status
+        run: |
+          # Passo 4: Atualizar o README.md com o status das traduções
+          echo "Atualizando o README com as informações de tradução..."
+          
+          # Exemplo simples de como atualizar o README, você pode formatar melhor como quiser
+          echo "## Status das Traduções" > updated_readme.md
+          cat translations_status.txt >> updated_readme.md
+
+          # Substitui o README original pelo novo
+          mv updated_readme.md README.md
+
+      - name: Commit e push das atualizações
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add README.md
+          git add translations_status.txt
+          git commit -m "Atualizar traduções e status no README.md"
+          git push
