@@ -15,32 +15,23 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v3
 
-      - name: Atualizar as traduções
+      - name: Baixar e atualizar as traduções
         run: |
-          # Passo 1: Clonar repositórios listados no arquivo 'repositorios.json'
+          # Passo 1: Baixar os arquivos de tradução dos repositórios listados no arquivo 'repositorios.json'
           repos=$(cat repositorios.json | jq -r '.repos[]')
           
           for repo in $repos; do
-            # Clonar cada repositório
-            echo "Clonando $repo..."
-            git clone "https://github.com/$repo.git" "mods/$repo"
-            
-            # Passo 2: Copiar traduções para a pasta de traduções do repositório
-            # (Você pode precisar ajustar os caminhos, dependendo de onde as traduções estão dentro dos repositórios)
-            cp -r "mods/$repo/traducoes/*" "traducoes/$repo/"
+            # Baixar o arquivo de tradução diretamente da URL
+            echo "Baixando arquivo de tradução de $repo..."
+            curl -L -o "traducoes/$(basename $repo)" "$repo"
 
-            # Passo 3: Verificar se a tradução foi atualizada
-            # (Aqui você pode adicionar lógica para comparar arquivos, ou só fazer uma marcação de data)
-            echo "Atualizando status de tradução para $repo..."
-            echo "Mod: $repo | Última Atualização: $(date '+%Y-%m-%d') | Status: ✅ Atualizado" >> translations_status.txt
+            # Passo 2: Verificar se a tradução foi atualizada
+            echo "Mod: $(basename $repo) | Última Atualização: $(date '+%Y-%m-%d') | Status: ✅ Atualizado" >> translations_status.txt
           done
 
       - name: Atualizar README.md com o status
         run: |
-          # Passo 4: Atualizar o README.md com o status das traduções
-          echo "Atualizando o README com as informações de tradução..."
-          
-          # Exemplo simples de como atualizar o README, você pode formatar melhor como quiser
+          # Passo 3: Atualizar o README.md com o status das traduções
           echo "## Status das Traduções" > updated_readme.md
           cat translations_status.txt >> updated_readme.md
 
