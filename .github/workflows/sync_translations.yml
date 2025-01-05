@@ -15,15 +15,6 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v3
 
-      - name: Configurar Node.js (para qualquer operação com arquivos JSON, caso necessário)
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
-      - name: Instalar dependências
-        run: |
-          npm install
-
       - name: Atualizar as traduções
         run: |
           # Passo 1: Clonar repositórios listados no arquivo 'repositorios.json'
