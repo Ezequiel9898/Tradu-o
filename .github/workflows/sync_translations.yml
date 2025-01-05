@@ -20,10 +20,17 @@ jobs:
           # Passo 1: Baixar os arquivos de tradução dos repositórios listados no arquivo 'repositorios.json'
           repos=$(cat repositorios.json | jq -r '.repos[]')
           
+          # Criar ou limpar o arquivo de status
+          echo "" > translations_status.txt
+
           for repo in $repos; do
-            # Baixar o arquivo de tradução diretamente da URL
-            echo "Baixando arquivo de tradução de $repo..."
-            curl -L -o "traducoes/$(basename $repo)" "$repo"
+            # Substituir "blob" por "raw" para baixar o arquivo diretamente
+            raw_url=$(echo $repo | sed 's/blob/raw/')
+
+            echo "Baixando arquivo de tradução de $raw_url..."
+
+            # Baixar o arquivo de tradução diretamente da URL RAW
+            curl -L -o "traducoes/$(basename $repo)" "$raw_url" || { echo "Erro ao baixar o arquivo de $raw_url"; exit 1; }
 
             # Passo 2: Verificar se a tradução foi atualizada
             echo "Mod: $(basename $repo) | Última Atualização: $(date '+%Y-%m-%d') | Status: ✅ Atualizado" >> translations_status.txt
