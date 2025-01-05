@@ -5,7 +5,7 @@ on:
     - cron: "0 0 * * *"  # Executa uma vez por dia à meia-noite (UTC)
   push:
     branches:
-      - main  # Executa quando há push para a branch principal
+      - main  # Executa quando há push na branch principal
 
 jobs:
   sync_translations:
@@ -17,28 +17,35 @@ jobs:
 
       - name: Baixar e atualizar as traduções
         run: |
-          # Passo 1: Baixar os arquivos de tradução dos repositórios listados no arquivo 'repositorios.json'
+          # Carregar os repositórios do arquivo JSON
           repos=$(cat repositorios.json | jq -r '.repos[]')
-          
-          # Criar ou limpar o arquivo de status
+
+          # Limpar ou criar o arquivo de status
           echo "" > translations_status.txt
 
+          # Criar a pasta de traduções, se não existir
+          mkdir -p traducoes
+
           for repo in $repos; do
-            # Substituir "blob" por "raw" para baixar o arquivo diretamente
+            # Substituir "blob" por "raw" na URL para baixar o arquivo diretamente
             raw_url=$(echo $repo | sed 's/blob/raw/')
 
             echo "Baixando arquivo de tradução de $raw_url..."
 
-            # Baixar o arquivo de tradução diretamente da URL RAW
-            curl -L -o "traducoes/$(basename $repo)" "$raw_url" || { echo "Erro ao baixar o arquivo de $raw_url"; exit 1; }
+            # Baixar o arquivo de tradução diretamente
+            curl -L -o "traducoes/$(basename $repo)" "$raw_url" || { 
+              echo "Erro ao baixar o arquivo de $raw_url"; 
+              echo "Mod: $(basename $repo) | Status: ❌ Erro no download" >> translations_status.txt; 
+              continue; 
+            }
 
-            # Passo 2: Verificar se a tradução foi atualizada
+            # Registro de sucesso no status
             echo "Mod: $(basename $repo) | Última Atualização: $(date '+%Y-%m-%d') | Status: ✅ Atualizado" >> translations_status.txt
           done
 
       - name: Atualizar README.md com o status
         run: |
-          # Passo 3: Atualizar o README.md com o status das traduções
+          # Atualizar o README.md com o status das traduções
           echo "## Status das Traduções" > updated_readme.md
           cat translations_status.txt >> updated_readme.md
 
@@ -49,7 +56,11 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add README.md
-          git add translations_status.txt
+          
+          # Configurar o remote para usar o token armazenado como segredo
+          git remote set-url origin https://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:${{ secrets.GH_TOKEN }}@github.com/Ezequiel9898/Tradu-o.git
+
+          # Adicionar, commitar e fazer o push das mudanças
+          git add README.md translations_status.txt
           git commit -m "Atualizar traduções e status no README.md"
           git push
