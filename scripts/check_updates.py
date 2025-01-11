@@ -1,114 +1,76 @@
+# File: scripts/check_updates.py
 import os
 import json
 import requests
 from datetime import datetime
 
-# Diretórios
-MODS_DIR = os.path.join(os.getcwd(), 'mods')
-MODS_JSON = os.path.join(os.getcwd(), 'scripts', 'mods.json')
+# Caminhos para os arquivos
+MODS_JSON_PATH = os.path.join(os.path.dirname(__file__), "mods.json")
+MODS_DIRECTORY = "../mods/"
 
-# Função para baixar o arquivo en_us.json de uma URL
-def download_en_us_file(mod_name, mod_url):
+# Função para carregar o arquivo mods.json
+def load_mods():
+    with open(MODS_JSON_PATH, "r") as f:
+        return json.load(f)
+
+# Função para salvar o arquivo mods.json
+def save_mods(mods_data):
+    with open(MODS_JSON_PATH, "w") as f:
+        json.dump(mods_data, f, indent=4)
+
+# Função para baixar o conteúdo do arquivo en_us.json
+def download_file(url):
+    response = requests.get(url)
+    response.raise_for_status()  # Levanta erro se a requisição falhar
+    return response.text
+
+# Função para verificar e atualizar um mod
+def update_mod(mod_name, mod_data):
+    mod_dir = os.path.join(MODS_DIRECTORY, mod_name)
+    local_file_path = os.path.join(mod_dir, "en_us.json")
+    os.makedirs(mod_dir, exist_ok=True)
+
     try:
-        print(f"Baixando o arquivo para o mod: {mod_name} de {mod_url}")
-        response = requests.get(mod_url)
-
-        # Verifica se a resposta foi bem sucedida
-        if response.status_code != 200:
-            print(f"Falha ao baixar o arquivo {mod_name}: Status {response.status_code}")
-            return None
-
-        # Retorna o conteúdo JSON
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Erro ao baixar o arquivo {mod_name}: {e}")
-        return None
-
-# Função para comparar e atualizar o arquivo en_us.json
-def update_en_us_file(mod_name, mod_url):
-    try:
-        mod_dir = os.path.join(MODS_DIR, mod_name)
-        if not os.path.exists(mod_dir):
-            os.makedirs(mod_dir)
-
-        # Caminho do arquivo en_us.json
-        en_us_file_path = os.path.join(mod_dir, 'en_us.json')
-
-        # Baixa o conteúdo atualizado
-        new_content = download_en_us_file(mod_name, mod_url)
-        if new_content is None:
-            print(f"Não foi possível atualizar o arquivo {mod_name}.")
-            return False
-
-        # Verifica se o arquivo já existe localmente
-        if os.path.exists(en_us_file_path):
-            with open(en_us_file_path, 'r', encoding='utf-8') as file:
-                current_content = json.load(file)
-
-            # Compara o conteúdo local com o novo conteúdo
-            if current_content == new_content:
-                print(f"O arquivo {mod_name} já está atualizado.")
-                return False
-            else:
-                print(f"O arquivo {mod_name} foi alterado. Atualizando...")
-        else:
-            print(f"Arquivo {mod_name} não encontrado. Criando um novo.")
-
-        # Salva o novo conteúdo no arquivo local
-        with open(en_us_file_path, 'w', encoding='utf-8') as file:
-            json.dump(new_content, file, ensure_ascii=False, indent=4)
-
-        print(f"Arquivo en_us.json do mod {mod_name} atualizado.")
-        return True
-
+        remote_content = download_file(mod_data["url"])
     except Exception as e:
-        print(f"Erro ao atualizar o arquivo en_us.json para o mod {mod_name}: {e}")
+        print(f"[Erro] Não foi possível baixar o arquivo para {mod_name}: {e}")
         return False
 
-# Função para atualizar o status no arquivo mods.json
-def update_mod_status(mod_name, mod_url, status):
-    try:
-        # Carrega o arquivo mods.json
-        with open(MODS_JSON, 'r', encoding='utf-8') as file:
-            mods_data = json.load(file)
+    if os.path.exists(local_file_path):
+        with open(local_file_path, "r") as f:
+            local_content = f.read()
+        if local_content == remote_content:
+            print(f"[Info] {mod_name} está atualizado.")
+            return False
 
-        # Atualiza o status do mod
-        mods_data[mod_name] = {
-            'url': mod_url,  # Link da URL do mod
-            'status': status,  # Atualiza o status
-            'last_update': datetime.now().strftime('%Y-%m-%d')  # Data da última atualização
-        }
+    # Atualiza o arquivo local
+    with open(local_file_path, "w") as f:
+        f.write(remote_content)
+    print(f"[Info] {mod_name} atualizado com sucesso.")
+    return True
 
-        # Salva as alterações no arquivo mods.json
-        with open(MODS_JSON, 'w', encoding='utf-8') as file:
-            json.dump(mods_data, file, ensure_ascii=False, indent=4)
-
-        print(f"Status do mod {mod_name} atualizado para: {status}.")
-    except Exception as e:
-        print(f"Erro ao atualizar o status do mod {mod_name}: {e}")
-
-# Função principal para verificar todos os mods
+# Função principal
 def main():
-    try:
-        # Carrega o arquivo mods.json
-        with open(MODS_JSON, 'r', encoding='utf-8') as file:
-            mods_data = json.load(file)
+    mods_data = load_mods()
+    updated_mods = []
 
-        for mod_name, mod_info in mods_data.items():
-            print(f"Verificando atualização para o mod: {mod_name}")
+    for mod_name, mod_data in mods_data.items():
+        print(f"Verificando {mod_name}...")
+        if update_mod(mod_name, mod_data):
+            mods_data[mod_name]["status"] = "Atualizado"
+            mods_data[mod_name]["last_update"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            updated_mods.append(mod_name)
+        else:
+            mods_data[mod_name]["status"] = "Já estava atualizado"
 
-            mod_url = mod_info['url']  # Pega o link da URL do mod
+    save_mods(mods_data)
 
-            # Tenta atualizar o arquivo en_us.json do mod
-            if update_en_us_file(mod_name, mod_url):
-                # Se o arquivo foi atualizado, marca como "Atualizado"
-                update_mod_status(mod_name, mod_url, "Atualizado")
-            else:
-                # Se o arquivo não foi alterado, marca como "Desatualizado"
-                update_mod_status(mod_name, mod_url, "Desatualizado")
-    except Exception as e:
-        print(f"Erro ao executar o processo: {e}")
+    if updated_mods:
+        print("\nMods atualizados:")
+        for mod in updated_mods:
+            print(f"- {mod}")
+    else:
+        print("\nNenhum mod precisava de atualização.")
 
-# Executa o script
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
