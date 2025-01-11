@@ -57,6 +57,10 @@ def update_readme(mods_json, readme_path):
                     mod_data = json.loads(content)
                     if mod_data:
                         status = "Atualizado"
+                        # Aqui você deve salvar o conteúdo do arquivo en_us.json no seu repositório local
+                        en_us_path = f"mods/{mod_name}/en_us.json"
+                        os.makedirs(os.path.dirname(en_us_path), exist_ok=True)
+                        save_json_to_file(en_us_path, mod_data)
                 except json.JSONDecodeError:
                     status = "Erro ao processar o JSON"
 
