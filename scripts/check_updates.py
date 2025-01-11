@@ -7,8 +7,8 @@ from datetime import datetime
 MODS_DIR = os.path.join(os.getcwd(), 'mods')
 MODS_JSON = os.path.join(os.getcwd(), 'scripts', 'mods.json')
 
-# Função para baixar e substituir o arquivo en_us.json com o conteúdo do repositório
-def update_en_us_file(mod_name, mod_url):
+# Função para baixar o arquivo en_us.json de uma URL
+def download_en_us_file(mod_name, mod_url):
     try:
         print(f"Baixando o arquivo para o mod: {mod_name} de {mod_url}")
         response = requests.get(mod_url)
@@ -16,16 +16,17 @@ def update_en_us_file(mod_name, mod_url):
         # Verifica se a resposta foi bem sucedida
         if response.status_code != 200:
             print(f"Falha ao baixar o arquivo {mod_name}: Status {response.status_code}")
-            return False
+            return None
 
-        # Tenta decodificar o JSON
-        try:
-            json_data = response.json()
-        except ValueError as e:
-            print(f"Erro ao tentar decodificar JSON para o mod {mod_name}: {e}")
-            return False
+        # Retorna o conteúdo JSON
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao baixar o arquivo {mod_name}: {e}")
+        return None
 
-        # Verifica ou cria a pasta do mod
+# Função para comparar e atualizar o arquivo en_us.json
+def update_en_us_file(mod_name, mod_url):
+    try:
         mod_dir = os.path.join(MODS_DIR, mod_name)
         if not os.path.exists(mod_dir):
             os.makedirs(mod_dir)
@@ -33,31 +34,52 @@ def update_en_us_file(mod_name, mod_url):
         # Caminho do arquivo en_us.json
         en_us_file_path = os.path.join(mod_dir, 'en_us.json')
 
-        # Salva o arquivo en_us.json com o conteúdo atualizado
-        with open(en_us_file_path, 'w', encoding='utf-8') as file:
-            json.dump(json_data, file, ensure_ascii=False, indent=4)
+        # Baixa o conteúdo atualizado
+        new_content = download_en_us_file(mod_name, mod_url)
+        if new_content is None:
+            print(f"Não foi possível atualizar o arquivo {mod_name}.")
+            return False
 
-        print(f"Arquivo en_us.json atualizado para o mod {mod_name}.")
+        # Verifica se o arquivo já existe localmente
+        if os.path.exists(en_us_file_path):
+            with open(en_us_file_path, 'r', encoding='utf-8') as file:
+                current_content = json.load(file)
+
+            # Compara o conteúdo local com o novo conteúdo
+            if current_content == new_content:
+                print(f"O arquivo {mod_name} já está atualizado.")
+                return False
+            else:
+                print(f"O arquivo {mod_name} foi alterado. Atualizando...")
+        else:
+            print(f"Arquivo {mod_name} não encontrado. Criando um novo.")
+
+        # Salva o novo conteúdo no arquivo local
+        with open(en_us_file_path, 'w', encoding='utf-8') as file:
+            json.dump(new_content, file, ensure_ascii=False, indent=4)
+
+        print(f"Arquivo en_us.json do mod {mod_name} atualizado.")
         return True
-    except requests.exceptions.RequestException as e:
+
+    except Exception as e:
         print(f"Erro ao atualizar o arquivo en_us.json para o mod {mod_name}: {e}")
         return False
 
-# Função para atualizar o status do mod no mods.json
+# Função para atualizar o status no arquivo mods.json
 def update_mod_status(mod_name, mod_url, status):
     try:
         # Carrega o arquivo mods.json
         with open(MODS_JSON, 'r', encoding='utf-8') as file:
             mods_data = json.load(file)
 
-        # Atualiza o status mantendo o link original
+        # Atualiza o status do mod
         mods_data[mod_name] = {
-            'url': mod_url,  # Mantém o link original
+            'url': mod_url,  # Link da URL do mod
             'status': status,  # Atualiza o status
-            'last_update': datetime.now().strftime('%Y-%m-%d')  # Adiciona a data da última atualização
+            'last_update': datetime.now().strftime('%Y-%m-%d')  # Data da última atualização
         }
 
-        # Salva novamente o arquivo mods.json
+        # Salva as alterações no arquivo mods.json
         with open(MODS_JSON, 'w', encoding='utf-8') as file:
             json.dump(mods_data, file, ensure_ascii=False, indent=4)
 
@@ -65,7 +87,7 @@ def update_mod_status(mod_name, mod_url, status):
     except Exception as e:
         print(f"Erro ao atualizar o status do mod {mod_name}: {e}")
 
-# Função principal para verificar e atualizar todos os mods
+# Função principal para verificar todos os mods
 def main():
     try:
         # Carrega o arquivo mods.json
@@ -77,12 +99,12 @@ def main():
 
             mod_url = mod_info['url']  # Pega o link da URL do mod
 
-            # Atualiza o arquivo en_us.json para o mod
+            # Tenta atualizar o arquivo en_us.json do mod
             if update_en_us_file(mod_name, mod_url):
-                # Se o arquivo for atualizado, marca como atualizado
+                # Se o arquivo foi atualizado, marca como "Atualizado"
                 update_mod_status(mod_name, mod_url, "Atualizado")
             else:
-                # Caso contrário, marca como desatualizado
+                # Se o arquivo não foi alterado, marca como "Desatualizado"
                 update_mod_status(mod_name, mod_url, "Desatualizado")
     except Exception as e:
         print(f"Erro ao executar o processo: {e}")
