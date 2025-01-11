@@ -1,4 +1,4 @@
 {
-    "Vinery": "Atualizado",
-    "AnotherMod": "Desatualizado"
+    "Vinery": "https://raw.githubusercontent.com/satisfyu/Vinery/1.20.1/common/src/main/resources/assets/vinery/lang/en_us.json",
+    "AnotherMod": "https://raw.githubusercontent.com/someuser/AnotherMod/main/lang/en_us.json"
 }
