@@ -1,4 +1,4 @@
-name: Atualizar Mods
+name: Atualizar Mods de Minecraft
 
 on:
   push:
@@ -7,29 +7,47 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-mods:
+  update_mods:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
+    # Passo 1: Checar o repositório
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
+    # Passo 2: Configuração do Git
+    - name: Set up Git user
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
 
-      - name: Install dependencies
-        run: |
-          pip install requests
+    # Passo 3: Instalar dependências do Python
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
 
-      - name: Run Update Script
-        run: python3 scripts/check_updates.py
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
 
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add -A
-          git commit -m "Atualizar status dos mods" || echo "Nenhuma alteração detectada"
-          git push
+    # Passo 4: Rodar o script de verificação e atualização dos mods
+    - name: Run check_updates.py script
+      run: python3 scripts/check_updates.py
+
+    # Passo 5: Checar o status do repositório
+    - name: Check Git status
+      run: |
+        git status
+        git diff
+
+    # Passo 6: Comitar as mudanças, caso existam
+    - name: Commit and push changes
+      run: |
+        git add -A
+        git diff
+        git commit -m "Atualizar status dos mods e arquivos de tradução" || echo "Nenhuma alteração para commit"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
