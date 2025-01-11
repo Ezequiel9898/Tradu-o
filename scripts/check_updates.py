@@ -71,21 +71,12 @@ def main():
 
     for mod_name, mod_url in mods_data.items():
         print(f"Verificando atualização para o mod: {mod_name}")
-        
-        mod_data, error = check_mod_update(mod_url, mod_name)
 
-        if error:
-            print(f"Erro: {error}")
+        # Tenta atualizar o arquivo en_us.json
+        if update_en_us_file(mod_name, mod_url):
+            mods_data[mod_name] = 'Atualizado'
         else:
-            # Atualiza o arquivo en_us.json com a versão mais recente
-            if mod_data:
-                print(f"Atualizando o arquivo en_us.json para o mod: {mod_name}")
-                if update_en_us_file(mod_name, mod_url):
-                    mods_data[mod_name] = 'Atualizado'
-                else:
-                    mods_data[mod_name] = 'Desatualizado'
-            else:
-                mods_data[mod_name] = 'Desatualizado'
+            mods_data[mod_name] = 'Desatualizado'
 
     save_mods_json(mods_data)
     update_readme(mods_data)
