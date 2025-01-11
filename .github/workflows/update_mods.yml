@@ -28,6 +28,13 @@ jobs:
       - name: Executar script de atualização
         run: python scripts/check_updates.py
 
+      - name: Verificar mudanças no repositório
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Sem mudanças para commitar."
+            exit 0
+          fi
+
       - name: Commitar e enviar mudanças
         run: |
           git config --global user.name "github-actions[bot]"
