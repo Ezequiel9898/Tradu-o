@@ -1,3 +1,4 @@
 {
-    "Vinery": "https://github.com/satisfyu/Vinery/blob/1.20.1/common/src/main/resources/assets/vinery/lang/en_us.json"
+    "Vinery": "https://raw.githubusercontent.com/satisfyu/Vinery/1.20.1/common/src/main/resources/assets/vinery/lang/en_us.json",
+    "AnotherMod": "https://example.com/path/to/another_mod/en_us.json"
 }
