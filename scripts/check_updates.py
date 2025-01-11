@@ -5,42 +5,38 @@ from datetime import datetime
 
 # Caminhos para os arquivos
 MODS_JSON_PATH = 'scripts/mods.json'
-EN_US_JSON_PATH = 'scripts/en_us.json'  # Caminho do arquivo en_us.json local
 README_PATH = 'README.md'
+MODS_DIR = 'mods/'  # Diretório onde os mods ficam
 
 # Função para ler o arquivo mods.json
 def load_mods_json():
     with open(MODS_JSON_PATH, 'r', encoding='utf-8') as file:
         return json.load(file)
 
-# Função para escrever de volta o mods.json
+# Função para salvar o arquivo mods.json
 def save_mods_json(data):
     with open(MODS_JSON_PATH, 'w', encoding='utf-8') as file:
         json.dump(data, file, ensure_ascii=False, indent=4)
 
-# Função para verificar se a tradução precisa ser atualizada
-def check_mod_update(mod_url, mod_name):
+# Função para baixar e atualizar o arquivo en_us.json
+def update_en_us_file(mod_name, mod_url):
     try:
         response = requests.get(mod_url)
-        response.raise_for_status()  # Vai lançar um erro se a resposta não for 200
-        return response.json(), None
-    except requests.exceptions.RequestException as e:
-        return None, f"Erro ao acessar {mod_name}: {e}"
+        response.raise_for_status()  # Lança um erro se o status não for OK (200)
 
-# Função para atualizar o arquivo en_us.json com a versão mais recente
-def update_en_us_file(mod_url):
-    try:
-        response = requests.get(mod_url)
-        response.raise_for_status()
-        
-        # Salva o conteúdo do arquivo en_us.json original
-        with open(EN_US_JSON_PATH, 'w', encoding='utf-8') as file:
+        mod_path = os.path.join(MODS_DIR, mod_name)
+        os.makedirs(mod_path, exist_ok=True)  # Cria a pasta do mod se não existir
+
+        en_us_file_path = os.path.join(mod_path, 'en_us.json')
+
+        # Salva o arquivo en_us.json original
+        with open(en_us_file_path, 'w', encoding='utf-8') as file:
             json.dump(response.json(), file, ensure_ascii=False, indent=4)
-        
-        print(f"Arquivo en_us.json atualizado com sucesso.")
+
+        print(f"Arquivo en_us.json atualizado para o mod {mod_name}.")
         return True
     except requests.exceptions.RequestException as e:
-        print(f"Erro ao atualizar o arquivo en_us.json: {e}")
+        print(f"Erro ao atualizar o arquivo en_us.json para o mod {mod_name}: {e}")
         return False
 
 # Função para atualizar o README.md
@@ -69,7 +65,7 @@ def update_readme(mods_data):
                 else:
                     file.write(line)
 
-# Função principal para atualizar o mods.json e README
+# Função principal para verificar e atualizar os mods
 def main():
     mods_data = load_mods_json()
 
@@ -84,7 +80,7 @@ def main():
             # Atualiza o arquivo en_us.json com a versão mais recente
             if mod_data:
                 print(f"Atualizando o arquivo en_us.json para o mod: {mod_name}")
-                if update_en_us_file(mod_url):
+                if update_en_us_file(mod_name, mod_url):
                     mods_data[mod_name] = 'Atualizado'
                 else:
                     mods_data[mod_name] = 'Desatualizado'
