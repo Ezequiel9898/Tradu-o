@@ -1,44 +1,35 @@
-name: Atualizar Traduções de Mods
+name: Update Mods Status
 
 on:
+  schedule:
+    - cron: '0 0 * * *'  # Executar diariamente a meia-noite
   push:
     branches:
-      - main  # Ajuste conforme sua branch principal
+      - main
 
 jobs:
-  update-mods:
-    runs-on: ubuntu-latest  # O ambiente de execução (Ubuntu)
-
+  update_status:
+    runs-on: ubuntu-latest
     steps:
-      # 1. Fazer checkout do repositório
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v2
 
-      # 2. Configurar o Python 3.x
-      - name: Set up Python 3.x
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
-      # 3. Instalar dependências (como requests)
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install requests
 
-      # 4. Executar o script de atualização
       - name: Run Update Script
-        run: |
-          python3 scripts/check_updates.py
+        run: python3 scripts/check_updates.py
 
-      # 5. Comitar e enviar as mudanças, caso haja alguma atualização
-      - name: Commit changes if necessary
+      - name: Commit and Push Changes
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
           git add .
-          git commit -m "Atualizando traduções e status dos mods"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Ezequiel9898/Tradu-o.git HEAD:main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          git commit -m "Atualizar status dos mods"
+          git push
