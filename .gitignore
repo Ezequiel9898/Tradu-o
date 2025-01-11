@@ -1,0 +1,4 @@
+# Ignorar arquivos temporários
+*.tmp
+*.log
+__pycache__/
