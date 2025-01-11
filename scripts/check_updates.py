@@ -11,9 +11,15 @@ MODS_JSON = os.path.join(os.getcwd(), 'scripts', 'mods.json')
 def update_en_us_file(mod_name, mod_url):
     try:
         # Baixa o arquivo original
+        print(f"Baixando o arquivo para o mod: {mod_name} de {mod_url}")
         response = requests.get(mod_url)
-        response.raise_for_status()
 
+        # Verifica se a resposta foi bem sucedida
+        if response.status_code != 200:
+            print(f"Falha ao baixar o arquivo {mod_name}: Status {response.status_code}")
+            return False
+
+        # Tenta decodificar o JSON
         try:
             json_data = response.json()
         except ValueError as e:
