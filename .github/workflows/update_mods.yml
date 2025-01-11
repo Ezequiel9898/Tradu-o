@@ -1,34 +1,43 @@
-name: Update Mods Status
+name: Atualizar Traduções de Mods
 
 on:
-  schedule:
-    - cron: "0 0 * * *"  # Executa diariamente
-  workflow_dispatch:  # Permite execução manual
+  push:
+    branches:
+      - main  # Ajuste conforme sua branch principal
 
 jobs:
-  check-mod-updates:
-    runs-on: ubuntu-latest
+  update-mods:
+    runs-on: ubuntu-latest  # O ambiente de execução (Ubuntu)
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+      # 1. Fazer checkout do repositório
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
+      # 2. Configurar o Python 3.x
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
-    - name: Install Dependencies
-      run: pip install requests
+      # 3. Instalar dependências (como requests)
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
 
-    - name: Run Update Script
-      run: python3 scripts/check_updates.py  # Usar python3 explicitamente
+      # 4. Executar o script de atualização
+      - name: Run Update Script
+        run: |
+          python3 scripts/check_updates.py
 
-    - name: Commit Changes
-      run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
-        git add .
-        git commit -m "Atualização automática de status dos mods"
-        git push
-      continue-on-error: true
+      # 5. Comitar e enviar as mudanças, caso haja alguma atualização
+      - name: Commit changes if necessary
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add .
+          git commit -m "Atualizando traduções e status dos mods"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

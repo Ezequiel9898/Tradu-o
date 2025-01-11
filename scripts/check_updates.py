@@ -1,95 +1,75 @@
-import json
 import os
+import json
 import requests
 from datetime import datetime
 
-def fetch_content(url):
-    """
-    Baixa o conteúdo do arquivo de uma URL fornecida. Se o link for do GitHub, ajusta a URL para usar o formato 'raw'.
-    """
+# Caminhos para os arquivos
+MODS_JSON_PATH = 'scripts/mods.json'
+README_PATH = 'README.md'
+
+# Função para ler o arquivo mods.json
+def load_mods_json():
+    with open(MODS_JSON_PATH, 'r', encoding='utf-8') as file:
+        return json.load(file)
+
+# Função para escrever de volta o mods.json
+def save_mods_json(data):
+    with open(MODS_JSON_PATH, 'w', encoding='utf-8') as file:
+        json.dump(data, file, ensure_ascii=False, indent=4)
+
+# Função para verificar se a tradução precisa ser atualizada
+def check_mod_update(mod_url, mod_name):
     try:
-        # Se a URL for do GitHub, substituímos a parte do 'blob' por 'raw.githubusercontent.com'
-        if 'github.com' in url:
-            url = url.replace('github.com', 'raw.githubusercontent.com').replace('blob/', '')
-
-        # Fazendo a requisição para baixar o conteúdo do arquivo
-        response = requests.get(url)
-        response.raise_for_status()  # Lança erro para códigos de status de erro (404, 403, etc.)
-
-        return response.text
+        response = requests.get(mod_url)
+        response.raise_for_status()
+        return response.json(), None
     except requests.exceptions.RequestException as e:
-        print(f"Erro ao baixar o conteúdo de {url}: {e}")
-        return None
+        return None, f"Erro ao acessar {mod_name}: {e}"
 
-def load_json_from_file(file_path):
-    """
-    Carrega um arquivo JSON local.
-    """
-    with open(file_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+# Função para atualizar o README.md
+def update_readme(mods_data):
+    with open(README_PATH, 'r', encoding='utf-8') as file:
+        readme_lines = file.readlines()
 
-def save_json_to_file(file_path, data):
-    """
-    Salva os dados em formato JSON em um arquivo.
-    """
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+    # Identificar onde o status dos mods está no README
+    start_index = None
+    for i, line in enumerate(readme_lines):
+        if "Lista de Mods" in line:
+            start_index = i
+            break
 
-def update_readme(mods_json, readme_path):
-    """
-    Atualiza o arquivo README.md com o status dos mods.
-    """
-    with open(readme_path, 'w', encoding='utf-8') as readme:
-        readme.write("# Traduções de Mods para Minecraft\n\n")
-        readme.write("Este repositório contém traduções de mods para Minecraft. O status das traduções é monitorado automaticamente.\n\n")
-        readme.write("## 📜 Lista de Mods\n\n")
-        readme.write("| Mod              | Status        | Última Atualização |\n")
-        readme.write("|------------------|---------------|--------------------|\n")
+    if start_index is not None:
+        with open(README_PATH, 'w', encoding='utf-8') as file:
+            for i, line in enumerate(readme_lines):
+                if i == start_index + 2:  # Adiciona a linha com os status dos mods
+                    file.write("## 📜 Lista de Mods\n")
+                    file.write("| Mod              | Status        | Última Atualização |\n")
+                    file.write("|-------------------|---------------|--------------------|\n")
+                    for mod_name, mod_url in mods_data.items():
+                        status = mod_url if mod_url != 'Atualizado' else 'Atualizado'
+                        last_update = datetime.now().strftime('%Y-%m-%d')
+                        file.write(f"| **{mod_name}** | {status} | {last_update} |\n")
+                else:
+                    file.write(line)
 
-        for mod_name, mod_url in mods_json.items():
-            # Aqui estamos verificando o status do mod. Adiciona "Atualizado" ou "Desatualizado".
-            status = "Desatualizado"
-            content = fetch_content(mod_url)
-
-            # Verificando o status do mod
-            if content:
-                try:
-                    mod_data = json.loads(content)
-                    if mod_data:
-                        status = "Atualizado"
-                        # Aqui você deve salvar o conteúdo do arquivo en_us.json no seu repositório local
-                        en_us_path = f"mods/{mod_name}/en_us.json"
-                        os.makedirs(os.path.dirname(en_us_path), exist_ok=True)
-                        save_json_to_file(en_us_path, mod_data)
-                except json.JSONDecodeError:
-                    status = "Erro ao processar o JSON"
-
-            # Adiciona a linha da tabela no README
-            last_update = datetime.now().strftime('%Y-%m-%d')
-            readme.write(f"| **{mod_name}** | {status} | {last_update} |\n")
-
+# Função principal para atualizar o mods.json e README
 def main():
-    mods_json_path = 'scripts/mods.json'  # Caminho do arquivo mods.json
-    readme_path = 'README.md'  # Caminho do README
-    mods_json = load_json_from_file(mods_json_path)
+    mods_data = load_mods_json()
 
-    # Exemplo de como adicionar novos mods
-    mods_to_check = {
-        "Vinery": "https://github.com/satisfyu/Vinery/blob/1.20.1/common/src/main/resources/assets/vinery/lang/en_us.json",
-        # Adicione mais mods conforme necessário
-    }
+    for mod_name, mod_url in mods_data.items():
+        print(f"Verificando atualização para o mod: {mod_name}")
+        mod_data, error = check_mod_update(mod_url, mod_name)
 
-    # Mantém apenas os links no mods.json
-    for mod_name, mod_url in mods_to_check.items():
-        mods_json[mod_name] = mod_url
+        if error:
+            print(f"Erro: {error}")
+        else:
+            if mod_data:  # Aqui você pode adicionar lógica para verificar a atualização
+                mods_data[mod_name] = 'Atualizado'
+            else:
+                mods_data[mod_name] = 'Desatualizado'
 
-    # Salvando o mods.json atualizado (agora sem o status)
-    save_json_to_file(mods_json_path, mods_json)
+    save_mods_json(mods_data)
+    update_readme(mods_data)
 
-    # Atualizando o README com o status
-    update_readme(mods_json, readme_path)
-
-    print("Atualização concluída.")
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
