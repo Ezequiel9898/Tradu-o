@@ -29,13 +29,18 @@ jobs:
         run: python scripts/check_updates.py
 
       - name: Verificar mudanças no repositório
+        id: check_changes
         run: |
           if [ -z "$(git status --porcelain)" ]; then
             echo "Sem mudanças para commitar."
-            exit 0
+            echo "changed=false" >> $GITHUB_ENV
+          else
+            echo "Mudanças detectadas."
+            echo "changed=true" >> $GITHUB_ENV
           fi
 
       - name: Commitar e enviar mudanças
+        if: env.changed == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
