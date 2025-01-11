@@ -2,12 +2,12 @@
 import os
 import json
 import requests
-from datetime import datetime
 
 MODS_JSON_PATH = os.path.join(os.path.dirname(__file__), "mods.json")
 MODS_DIRECTORY = os.path.join(os.path.dirname(__file__), "../mods/")
 
 def load_mods():
+    """Carrega os dados do mods.json"""
     try:
         with open(MODS_JSON_PATH, "r") as f:
             return json.load(f)
@@ -16,6 +16,7 @@ def load_mods():
         return {}
 
 def download_file(url):
+    """Faz o download do conteúdo do arquivo remoto"""
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -24,35 +25,37 @@ def download_file(url):
         print(f"[Erro] Falha ao baixar arquivo de {url}: {e}")
         return None
 
-def update_mod(mod_name, url):
-    mod_dir = os.path.join(MODS_DIRECTORY, mod_name)
-    local_file_path = os.path.join(mod_dir, "en_us.json")
-
-    # Verifica se o arquivo en_us.json existe
-    if not os.path.exists(local_file_path):
-        print(f"[Erro] O arquivo {local_file_path} não existe. Pule este mod ou crie o arquivo.")
-        return False, "Arquivo ausente"
-
-    # Faz o download do arquivo remoto
-    remote_content = download_file(url)
-    if remote_content is None:
-        return False, "Erro ao baixar"
-
-    # Lê o conteúdo local e compara com o remoto
+def update_existing_file(mod_name, local_file_path, remote_content):
+    """Atualiza o arquivo existente com o conteúdo remoto"""
     with open(local_file_path, "r") as f:
         local_content = f.read()
 
     if local_content == remote_content:
-        print(f"[Info] {mod_name} já está atualizado.")
-        return False, "Já atualizado"
+        print(f"[Info] {mod_name}: já está atualizado.")
+        return False
 
-    # Atualiza o arquivo local com o novo conteúdo
     with open(local_file_path, "w") as f:
         f.write(remote_content)
-    print(f"[Info] {mod_name} foi atualizado.")
-    return True, "Atualizado com sucesso"
+
+    print(f"[Info] {mod_name}: atualizado com sucesso.")
+    return True
+
+def update_mod(mod_name, url):
+    """Verifica e atualiza o arquivo en_us.json de um mod"""
+    local_file_path = os.path.join(MODS_DIRECTORY, mod_name, "en_us.json")
+
+    if not os.path.exists(local_file_path):
+        print(f"[Erro] O arquivo {local_file_path} não existe. Pule este mod.")
+        return False
+
+    remote_content = download_file(url)
+    if remote_content is None:
+        return False
+
+    return update_existing_file(mod_name, local_file_path, remote_content)
 
 def main():
+    """Função principal"""
     mods_data = load_mods()
     if not mods_data:
         print("[Erro] Nenhum dado encontrado no mods.json")
@@ -60,8 +63,7 @@ def main():
 
     for mod_name, url in mods_data.items():
         print(f"Verificando {mod_name}...")
-        updated, status = update_mod(mod_name, url)
-        print(f"{mod_name}: {status}")
+        update_mod(mod_name, url)
 
 if __name__ == "__main__":
     main()
