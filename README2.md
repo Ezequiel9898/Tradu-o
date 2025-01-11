@@ -1,7 +1,3 @@
-Claro! Aqui está uma versão estruturada para um arquivo `README.md`, utilizando formatação Markdown, para que fique bem organizado e fácil de seguir:
-
----
-
 # Contribuindo para o Minecraft Mods Translations
 
 Obrigado por seu interesse em contribuir para o projeto de traduções de mods do Minecraft! Este projeto visa fornecer traduções para mods populares do Minecraft, facilitando a experiência para jogadores que preferem jogar em português do Brasil.
@@ -93,13 +89,3 @@ Quando terminar suas alterações (adicionar mods ou atualizar traduções), fa�
 ## 6. Verificando o Status de Atualização
 
 O script também mantém o status dos mods no arquivo `README.md` de cada mod. Ele marcará como **"Atualizado"** ou **"Desatualizado"** baseado em uma comparação entre o conteúdo do arquivo original `en_us.json` e a versão baixada. A ideia é manter os mods sempre atualizados com as traduções mais recentes.
-
----
-
-## Obrigado por Contribuir!
-
-Toda contribuição é muito apreciada e ajuda a melhorar a experiência de milhares de jogadores de Minecraft no Brasil!
-
----
-
-Essa estrutura proporciona uma boa organização, além de ser clara e fácil de seguir. Pode ser copiada diretamente para o arquivo `README.md` no seu repositório.
