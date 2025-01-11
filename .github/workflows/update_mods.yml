@@ -38,6 +38,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git add .
           git commit -m "Atualizando traduções e status dos mods"
-          git push
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Ezequiel9898/Tradu-o.git HEAD:main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
