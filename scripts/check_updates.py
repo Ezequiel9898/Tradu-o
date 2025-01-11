@@ -7,10 +7,9 @@ from datetime import datetime
 MODS_DIR = os.path.join(os.getcwd(), 'mods')
 MODS_JSON = os.path.join(os.getcwd(), 'scripts', 'mods.json')
 
-# Função para baixar e atualizar o arquivo en_us.json
+# Função para baixar e substituir o arquivo en_us.json com o conteúdo do repositório
 def update_en_us_file(mod_name, mod_url):
     try:
-        # Baixa o arquivo original
         print(f"Baixando o arquivo para o mod: {mod_name} de {mod_url}")
         response = requests.get(mod_url)
 
@@ -34,7 +33,7 @@ def update_en_us_file(mod_name, mod_url):
         # Caminho do arquivo en_us.json
         en_us_file_path = os.path.join(mod_dir, 'en_us.json')
 
-        # Salva o arquivo en_us.json
+        # Salva o arquivo en_us.json com o conteúdo atualizado
         with open(en_us_file_path, 'w', encoding='utf-8') as file:
             json.dump(json_data, file, ensure_ascii=False, indent=4)
 
