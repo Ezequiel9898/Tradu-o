@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+from datetime import datetime
 
 # Diretórios
 MODS_DIR = os.path.join(os.getcwd(), 'mods')
@@ -38,14 +39,18 @@ def update_en_us_file(mod_name, mod_url):
         return False
 
 # Função para atualizar o status do mod no mods.json
-def update_mod_status(mod_name, status):
+def update_mod_status(mod_name, mod_url, status):
     try:
         # Carrega o arquivo mods.json
         with open(MODS_JSON, 'r', encoding='utf-8') as file:
             mods_data = json.load(file)
 
-        # Atualiza o status
-        mods_data[mod_name] = status
+        # Atualiza o status mantendo o link original
+        mods_data[mod_name] = {
+            'url': mod_url,  # Mantém o link original
+            'status': status,  # Atualiza o status
+            'last_update': datetime.now().strftime('%Y-%m-%d')  # Adiciona a data da última atualização
+        }
 
         # Salva novamente o arquivo mods.json
         with open(MODS_JSON, 'w', encoding='utf-8') as file:
@@ -62,16 +67,18 @@ def main():
         with open(MODS_JSON, 'r', encoding='utf-8') as file:
             mods_data = json.load(file)
 
-        for mod_name, mod_url in mods_data.items():
+        for mod_name, mod_info in mods_data.items():
             print(f"Verificando atualização para o mod: {mod_name}")
+
+            mod_url = mod_info['url']  # Pega o link da URL do mod
 
             # Atualiza o arquivo en_us.json para o mod
             if update_en_us_file(mod_name, mod_url):
                 # Se o arquivo for atualizado, marca como atualizado
-                update_mod_status(mod_name, "Atualizado")
+                update_mod_status(mod_name, mod_url, "Atualizado")
             else:
                 # Caso contrário, marca como desatualizado
-                update_mod_status(mod_name, "Desatualizado")
+                update_mod_status(mod_name, mod_url, "Desatualizado")
     except Exception as e:
         print(f"Erro ao executar o processo: {e}")
 

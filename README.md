@@ -7,3 +7,4 @@ Este repositório contém traduções de mods para Minecraft. O status das tradu
 | Mod              | Status        | Última Atualização |
 |------------------|---------------|--------------------|
 | **Vinery**       | Atualizado    | 2025-01-11         |
+| **AnotherMod**   | Desatualizado | 2025-01-10         |
