@@ -1,17 +1,17 @@
-name: Update Mods Status
+name: Atualizar Mods
 
 on:
-  schedule:
-    - cron: '0 0 * * *'  # Executar diariamente a meia-noite
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  update_status:
+  update-mods:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
+      - name: Check out the repository
         uses: actions/checkout@v2
 
       - name: Set up Python
@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           pip install requests
 
@@ -30,6 +30,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add .
-          git commit -m "Atualizar status dos mods"
+          git add -A
+          git commit -m "Atualizar status dos mods" || echo "Nenhuma alteração detectada"
           git push

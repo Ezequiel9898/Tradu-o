@@ -1,21 +1,15 @@
 import os
 import json
 import requests
-from datetime import datetime
 
-MODS_JSON_PATH = 'scripts/mods.json'
-MODS_DIR = 'mods/'
+# Diretórios
+MODS_DIR = os.path.join(os.getcwd(), 'mods')
+MODS_JSON = os.path.join(os.getcwd(), 'scripts', 'mods.json')
 
-def load_mods_json():
-    with open(MODS_JSON_PATH, 'r', encoding='utf-8') as file:
-        return json.load(file)
-
-def save_mods_json(data):
-    with open(MODS_JSON_PATH, 'w', encoding='utf-8') as file:
-        json.dump(data, file, ensure_ascii=False, indent=4)
-
+# Função para baixar e atualizar o arquivo en_us.json
 def update_en_us_file(mod_name, mod_url):
     try:
+        # Baixa o arquivo original
         response = requests.get(mod_url)
         response.raise_for_status()
 
@@ -25,12 +19,15 @@ def update_en_us_file(mod_name, mod_url):
             print(f"Erro ao tentar decodificar JSON para o mod {mod_name}: {e}")
             return False
 
+        # Verifica ou cria a pasta do mod
         mod_dir = os.path.join(MODS_DIR, mod_name)
         if not os.path.exists(mod_dir):
             os.makedirs(mod_dir)
 
+        # Caminho do arquivo en_us.json
         en_us_file_path = os.path.join(mod_dir, 'en_us.json')
 
+        # Salva o arquivo en_us.json
         with open(en_us_file_path, 'w', encoding='utf-8') as file:
             json.dump(json_data, file, ensure_ascii=False, indent=4)
 
@@ -40,50 +37,44 @@ def update_en_us_file(mod_name, mod_url):
         print(f"Erro ao atualizar o arquivo en_us.json para o mod {mod_name}: {e}")
         return False
 
-def update_readme(mods_data):
-    with open('README.md', 'r', encoding='utf-8') as file:
-        readme_lines = file.readlines()
+# Função para atualizar o status do mod no mods.json
+def update_mod_status(mod_name, status):
+    try:
+        # Carrega o arquivo mods.json
+        with open(MODS_JSON, 'r', encoding='utf-8') as file:
+            mods_data = json.load(file)
 
-    start_index = None
-    for i, line in enumerate(readme_lines):
-        if "Status de Tradução dos Mods" in line:
-            start_index = i
-            break
+        # Atualiza o status
+        mods_data[mod_name] = status
 
-    if start_index is not None:
-        with open('README.md', 'w', encoding='utf-8') as file:
-            for i, line in enumerate(readme_lines):
-                if i == start_index + 1:
-                    file.write("## Status de Tradução dos Mods\n")
-                    for mod_name, mod_info in mods_data.items():
-                        status = mod_info['status']
-                        file.write(f"- **{mod_name}**: {status}\n")
-                else:
-                    file.write(line)
+        # Salva novamente o arquivo mods.json
+        with open(MODS_JSON, 'w', encoding='utf-8') as file:
+            json.dump(mods_data, file, ensure_ascii=False, indent=4)
 
+        print(f"Status do mod {mod_name} atualizado para: {status}.")
+    except Exception as e:
+        print(f"Erro ao atualizar o status do mod {mod_name}: {e}")
+
+# Função principal para verificar e atualizar todos os mods
 def main():
-    mods_data = load_mods_json()
+    try:
+        # Carrega o arquivo mods.json
+        with open(MODS_JSON, 'r', encoding='utf-8') as file:
+            mods_data = json.load(file)
 
-    for mod_name, mod_info in mods_data.items():
-        print(f"Verificando atualização para o mod: {mod_name}")
+        for mod_name, mod_url in mods_data.items():
+            print(f"Verificando atualização para o mod: {mod_name}")
 
-        mod_url = mod_info['url']
+            # Atualiza o arquivo en_us.json para o mod
+            if update_en_us_file(mod_name, mod_url):
+                # Se o arquivo for atualizado, marca como atualizado
+                update_mod_status(mod_name, "Atualizado")
+            else:
+                # Caso contrário, marca como desatualizado
+                update_mod_status(mod_name, "Desatualizado")
+    except Exception as e:
+        print(f"Erro ao executar o processo: {e}")
 
-        if update_en_us_file(mod_name, mod_url):
-            mod_info['status'] = 'Atualizado'
-        else:
-            mod_info['status'] = 'Desatualizado'
-
-        mod_dir = os.path.join(MODS_DIR, mod_name)
-        readme_path = os.path.join(mod_dir, 'README.md')
-
-        with open(readme_path, 'w', encoding='utf-8') as file:
-            file.write(f"# Status da Tradução - {mod_name}\n\n")
-            file.write(f"- **Status**: {mod_info['status']}\n")
-            file.write(f"- **Última atualização**: {datetime.now().strftime('%Y-%m-%d')}\n")
-
-    save_mods_json(mods_data)
-    update_readme(mods_data)
-
-if __name__ == "__main__":
+# Executa o script
+if __name__ == '__main__':
     main()
