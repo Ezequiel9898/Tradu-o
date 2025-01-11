@@ -28,23 +28,25 @@ def update_mod(mod_name, url):
     mod_dir = os.path.join(MODS_DIRECTORY, mod_name)
     local_file_path = os.path.join(mod_dir, "en_us.json")
 
-    # Garante que o diretório do mod existe
-    os.makedirs(mod_dir, exist_ok=True)
+    # Verifica se o arquivo en_us.json existe
+    if not os.path.exists(local_file_path):
+        print(f"[Erro] O arquivo {local_file_path} não existe. Pule este mod ou crie o arquivo.")
+        return False, "Arquivo ausente"
 
     # Faz o download do arquivo remoto
     remote_content = download_file(url)
     if remote_content is None:
         return False, "Erro ao baixar"
 
-    # Verifica se o arquivo local já existe e compara o conteúdo
-    if os.path.exists(local_file_path):
-        with open(local_file_path, "r") as f:
-            local_content = f.read()
-        if local_content == remote_content:
-            print(f"[Info] {mod_name} já está atualizado.")
-            return False, "Já atualizado"
+    # Lê o conteúdo local e compara com o remoto
+    with open(local_file_path, "r") as f:
+        local_content = f.read()
 
-    # Salva o novo conteúdo
+    if local_content == remote_content:
+        print(f"[Info] {mod_name} já está atualizado.")
+        return False, "Já atualizado"
+
+    # Atualiza o arquivo local com o novo conteúdo
     with open(local_file_path, "w") as f:
         f.write(remote_content)
     print(f"[Info] {mod_name} foi atualizado.")
