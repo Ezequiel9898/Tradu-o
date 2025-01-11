@@ -10,6 +10,9 @@ Este repositório contém traduções de mods para Minecraft. O status das tradu
 | **Vinery** | Desatualizado | 2025-01-11 |
 | Mod              | Status        | Última Atualização |
 |-------------------|---------------|--------------------|
+| **Vinery** | Desatualizado | 2025-01-11 |
+| Mod              | Status        | Última Atualização |
+|-------------------|---------------|--------------------|
 | **Vinery** | https://github.com/satisfyu/Vinery/blob/1.20.1/common/src/main/resources/assets/vinery/lang/en_us.json | 2025-01-11 |
 | Mod              | Status        | Última Atualização |
 |-------------------|---------------|--------------------|
