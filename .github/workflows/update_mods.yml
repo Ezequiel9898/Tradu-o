@@ -22,7 +22,7 @@ jobs:
       run: pip install requests
 
     - name: Run Update Script
-      run: python scripts/check_updates.py
+      run: python3 scripts/check_updates.py  # Usar python3 explicitamente
 
     - name: Commit Changes
       run: |
